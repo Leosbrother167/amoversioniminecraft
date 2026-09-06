@@ -47,6 +47,7 @@
             padding: 10px;
             border-bottom: 1px solid #444;
             font-size: 0.9rem;
+            vertical-align: middle;
         }
         th { color: #4CAF50; }
         .btn {
@@ -73,6 +74,31 @@
         }
         textarea { resize: vertical; height: 80px; }
         .hidden { display: none !important; }
+        .status-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background: #222;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .status-select option {
+            background: #1e1e1e;
+            color: #fff;
+        }
+        .stat-box {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid #444;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .stat-box span {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -91,6 +117,24 @@
     <div id="adminPanel" class="container hidden">
         <h2>Pannello di Controllo & Gestione Sito</h2>
 
+        <!-- SEZIONE STATISTICHE UTENTI REGISTRATI -->
+        <h3>👥 Statistiche Utenti Registrati</h3>
+        <div class="stat-box">
+            Totale utenti registrati unici: <span id="totaleUtentiCount">0</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome Utente / Nickname</th>
+                    <th>Email</th>
+                    <th>Data Registrazione</th>
+                </tr>
+            </thead>
+            <tbody id="tabellaUtentiBody">
+                <!-- Verrà popolato dinamicamente via script -->
+            </tbody>
+        </table>
+
         <!-- SEZIONE GESTIONE MANUTENZIONE E CHANGELOG -->
         <h3>📢 Gestione Riavvio e Changelog in Tempo Reale</h3>
         <p>Avvisa gli utenti del riavvio imminente o pubblica le novità dell'ultimo update.</p>
@@ -100,6 +144,16 @@
             <button id="btnAvviaManutenzione" class="btn btn-warning" style="flex: 1;">⚠️ Avvia Avviso Riavvio (1 Minuto)</button>
             <button id="btnFineManutenzione" class="btn" style="flex: 1; background: #2196F3;">✅ Fine Update & Mostra Changelog</button>
         </div>
+
+        <!-- SEZIONE INVIO AVVISI PERSONALI O A TUTTI (POP-UP) -->
+        <h3>🚨 Invia Avviso / Pop-up in Tempo Reale</h3>
+        <p>Invia un avviso personalizzato che apparirà immediatamente ai giocatori selezionati.</p>
+        <label for="testoAvviso">Messaggio dell'Avviso:</label>
+        <textarea id="testoAvviso" placeholder="Scrivi qui il contenuto del pop-up..."></textarea>
+        <label for="destinatarioAvviso">Destinatario:</label>
+        <input type="text" id="destinatarioAvviso" placeholder="Scrivi il nickname esatto oppure 'tutti'">
+        <button id="inviaAvvisoBtn" class="btn" style="width: 100%;">Invia Avviso Pop-up</button>
+        <p id="statoAvviso" style="margin-top: 10px; font-size: 0.9rem;"></p>
 
         <!-- SEZIONE GESTIONE BAN -->
         <h3>🛠️ Gestione Ban Utenti</h3>
@@ -120,6 +174,7 @@
                     <th>Nome Utente</th>
                     <th>Tipo / Messaggio</th>
                     <th>Data</th>
+                    <th>Stato</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
@@ -146,7 +201,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc, setDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC2a2DiYisJg7-a70zd5Lv-f8C9-ZKZl00",
@@ -169,12 +224,61 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('adminPanel').classList.remove('hidden');
+                caricaUtentiRegistrati();
                 caricaFeedback();
                 caricaVip();
             } catch (error) {
                 document.getElementById('statoLogin').innerText = "Credenziali non valide.";
             }
         });
+
+        // Carica gli utenti unici filtrando i doppioni
+        async function caricaUtentiRegistrati() {
+            const tb = document.getElementById('tabellaUtentiBody');
+            const countSpan = document.getElementById('totaleUtentiCount');
+            tb.innerHTML = "";
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "utenti"));
+                const utentiUnici = {};
+
+                querySnapshot.forEach((documento) => {
+                    const dati = documento.data();
+                    const rawNick = dati.username || dati.nickname || documento.id;
+                    const nickKey = rawNick.trim().toLowerCase();
+
+                    if (!utentiUnici[nickKey]) {
+                        utentiUnici[nickKey] = {
+                            nomeVisualizzato: rawNick,
+                            email: dati.email || "-",
+                            data: dati.dataRegistrazione || dati.createdAt || "-"
+                        };
+                    }
+                });
+
+                const listaUtenti = Object.values(utentiUnici);
+                countSpan.innerText = listaUtenti.length;
+
+                if (listaUtenti.length === 0) {
+                    tb.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #888;">Nessun utente registrato trovato.</td></tr>`;
+                    return;
+                }
+
+                listaUtenti.forEach((utente) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${utente.nomeVisualizzato}</td>
+                        <td>${utente.email}</td>
+                        <td>${utente.data}</td>
+                    `;
+                    tb.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Errore caricamento utenti:", error);
+                countSpan.innerText = "Errore";
+                tb.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #ff5252;">Impossibile caricare gli utenti.</td></tr>`;
+            }
+        }
 
         // Gestione Manutenzione & Changelog
         document.getElementById('btnAvviaManutenzione').addEventListener('click', async () => {
@@ -200,6 +304,36 @@
                 }, { merge: true });
                 alert("Aggiornamento completato! Gli utenti vedranno il changelog.");
             } catch (err) { console.error(err); }
+        });
+
+        // Gestione Invio Avvisi / Pop-up in Tempo Reale
+        document.getElementById('inviaAvvisoBtn').addEventListener('click', async () => {
+            const messaggio = document.getElementById('testoAvviso').value.trim();
+            const destinatario = document.getElementById('destinatarioAvviso').value.trim().toLowerCase();
+            const statoP = document.getElementById('statoAvviso');
+
+            if (!messaggio || !destinatario) {
+                statoP.style.color = "#ff5252";
+                statoP.innerText = "Compila tutti i campi!";
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "avvisi"), {
+                    messaggio: messaggio,
+                    destinatario: destinatario,
+                    timestamp: Date.now()
+                });
+
+                statoP.style.color = "#4CAF50";
+                statoP.innerText = "Avviso pop-up inviato con successo!";
+                document.getElementById('testoAvviso').value = "";
+                document.getElementById('destinatarioAvviso').value = "";
+            } catch (e) {
+                console.error("Errore invio avviso:", e);
+                statoP.style.color = "#ff5252";
+                statoP.innerText = "Errore durante l'invio dell'avviso.";
+            }
         });
 
         // Gestione Ban Utenti
@@ -234,21 +368,50 @@
             const tb = document.getElementById('tabellaFeedbackBody');
             tb.innerHTML = "";
             const querySnapshot = await getDocs(collection(db, "feedback"));
+            
             querySnapshot.forEach((documento) => {
                 const dati = documento.data();
+                const docId = documento.id;
+                const statoCorrente = dati.stato || "sospensione";
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${dati.username || "Anonimo"}</td>
                     <td><strong>[${(dati.tipo || "altro").toUpperCase()}]</strong> ${dati.messaggio}</td>
                     <td>${dati.data || "-"}</td>
-                    <td><button class="btn btn-danger btn-elimina" data-id="${documento.id}" style="padding: 4px 8px; font-size: 12px;">Elimina</button></td>
+                    <td>
+                        <select class="status-select" data-id="${docId}">
+                            <option value="sospensione" ${statoCorrente === 'sospensione' ? 'selected' : ''}>⏳ In sospensione</option>
+                            <option value="letto" ${statoCorrente === 'letto' ? 'selected' : ''}>👁️ Letto</option>
+                            <option value="accettato" ${statoCorrente === 'accettato' ? 'selected' : ''}>✅ Accettato</option>
+                            <option value="rifiutato" ${statoCorrente === 'rifiutato' ? 'selected' : ''}>❌ Rifiutato</option>
+                        </select>
+                    </td>
+                    <td><button class="btn btn-danger btn-elimina" data-id="${docId}" style="padding: 4px 8px; font-size: 12px;">Elimina</button></td>
                 `;
                 tb.appendChild(tr);
             });
+
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const idFeedback = e.target.getAttribute('data-id');
+                    const nuovoStato = e.target.value;
+                    try {
+                        const feedbackRef = doc(db, "feedback", idFeedback);
+                        await updateDoc(feedbackRef, { stato: nuovoStato });
+                    } catch (error) {
+                        console.error("Errore aggiornamento stato:", error);
+                        alert("Impossibile aggiornare lo stato.");
+                    }
+                });
+            });
+
             document.querySelectorAll('.btn-elimina').forEach(b => {
                 b.addEventListener('click', async (e) => {
-                    await deleteDoc(doc(db, "feedback", e.target.getAttribute('data-id')));
-                    caricaFeedback();
+                    if (confirm("Vuoi davvero eliminare questo feedback?")) {
+                        await deleteDoc(doc(db, "feedback", e.target.getAttribute('data-id')));
+                        caricaFeedback();
+                    }
                 });
             });
         }

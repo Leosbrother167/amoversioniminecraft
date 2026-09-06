@@ -21,7 +21,6 @@
             transition: background-color 0.4s ease, color 0.4s ease;
         }
 
-        /* Schermata Intro Video */
         #intro-container {
             position: fixed;
             top: 0;
@@ -43,7 +42,6 @@
             object-fit: cover;
         }
 
-        /* Testo di suggerimento per saltare l'intro */
         .skip-hint {
             position: absolute;
             bottom: 30px;
@@ -62,7 +60,6 @@
             display: none;
         }
 
-        /* Selettore Tema */
         .theme-selector-container {
             position: absolute;
             top: 20px;
@@ -130,7 +127,6 @@
         }
         .back-btn:hover { transform: scale(1.08); }
 
-        /* Light Mode */
         body.light-mode { background-color: #f0f0f0; color: #1a1a1a; }
         body.light-mode .container { background-color: #ffffff; border: 1px solid #ddd; }
         body.light-mode h1 { color: #d32f2f; }
@@ -141,17 +137,14 @@
 </head>
 <body>
 
-    <!-- Intro Video con scritta di suggerimento -->
     <div id="intro-container">
         <video id="introVideo" autoplay muted playsinline id="intro-video">
-            <!-- CAMBIA QUI IL PERCORSO DEL VIDEO PER OGNI VERSIONE -->
             <source src="../foto/intro-1.21.mp4" type="video/mp4">
             Il tuo browser non supporta i video.
         </video>
         <div class="skip-hint">Premi <b>Spazio</b> o clicca per saltare</div>
     </div>
 
-    <!-- Contenuto principale della pagina -->
     <div id="main-page-content">
         <div class="theme-selector-container">
             <label for="theme-select">Tema:</label>
@@ -162,7 +155,6 @@
         </div>
 
         <div class="container">
-            <!-- CAMBIA QUI IL TITOLO E I DATI DELLA VERSIONE -->
             <h1>Minecraft 1.21</h1>
             <p class="subtitle" style="color: #f106f1;">Nome drop: Tricky Trials</p>
             
@@ -183,9 +175,7 @@
         const mainPageContent = document.getElementById('main-page-content');
 
         function terminaIntro() {
-            // Evita che venga eseguito più volte se l'utente preme più tasti
             if (introContainer.style.display === 'none') return;
-
             video.pause();
             introContainer.style.opacity = '0';
             setTimeout(() => {
@@ -194,21 +184,15 @@
             }, 500);
         }
 
-        // 1. Fine naturale del video
         video.addEventListener('ended', terminaIntro);
-
-        // 2. Click sullo schermo per saltare
         introContainer.addEventListener('click', terminaIntro);
-
-        // 3. Pressione della barra spaziatrice per saltare
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.key === ' ') {
-                e.preventDefault(); // Evita che la pagina scorra verso il basso premendo spazio
+                e.preventDefault();
                 terminaIntro();
             }
         });
 
-        // Gestione Tema Giorno/Notte
         const themeSelect = document.getElementById('theme-select');
         const body = document.body;
         const savedTheme = localStorage.getItem('theme');
