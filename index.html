@@ -115,10 +115,21 @@
  font-weight: bold;
  }
 
+ .settings-panel { position:absolute; top:72px; right:20px; z-index:100; width:min(310px, calc(100vw - 40px)); box-sizing:border-box; padding:12px 14px; border-radius:10px; background:rgba(30,30,30,.94); border:1px solid rgba(255,255,255,.2); text-align:left; box-shadow:0 5px 18px rgba(0,0,0,.25); }
+ .settings-panel h2 { margin:0 0 10px; font-size:1rem; color:#ffeb3b; }
+ .settings-panel label { display:flex; align-items:flex-start; gap:8px; margin:8px 0; cursor:pointer; font-size:.86rem; }
+ .settings-panel input { accent-color:#4caf50; margin-top:3px; }
+ 
+ .first-visit-guide { position:absolute; top:225px; right:20px; z-index:101; background:#fff3cd; color:#222; border:1px solid #e0b84d; border-radius:8px; padding:10px 14px; text-align:left; box-shadow:0 4px 14px #0005; font-size:.85rem; }
+ .account-guide { position:absolute; top:65px; left:20px; z-index:101; color:#222; background:#fff3cd; border:1px solid #e0b84d; border-radius:8px; padding:7px 10px; font-weight:bold; }
+ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+ .first-visit-guide button { margin-top:7px; cursor:pointer; }
+ body.light-mode .settings-panel { background:rgba(255,255,255,.96); border-color:#ccc; }
  .user-status-container {
  position: absolute;
  top: 20px;
  left: 20px;
+ right: auto;
  background: rgba(30, 30, 30, 0.85);
  padding: 8px 14px;
  border-radius: 8px;
@@ -393,7 +404,8 @@
  <div class="modal-content" style="background: #1e1e1e; padding: 35px; border-radius: 16px; border: 2px solid #ff5252; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8);">
  <h2 style="color: #ff5252; margin-top: 0;">IMPORTANTE</h2>
  <p style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">Scritto da owner</p>
- <p id="testoMessaggioAvviso" style="color: #fff; font-size: 1.1rem; margin-bottom: 25px; word-break: break-word;"></p>
+ <p id="testoMessaggioAvviso" style="color: #fff; font-size: 1.1rem; margin-bottom: 16px; word-break: break-word;"></p>
+ <div id="videoAvvisoContainer" style="margin-bottom:20px;"></div>
  <button id="chiudiAvvisoBtn" class="btn" style="width: 100%;">OK</button>
  </div>
  </div>
@@ -404,6 +416,17 @@
  <option value="dark">🌙 Notte (Scuro)</option>
  <option value="light">☀️ Giorno (Chiaro)</option>
  </select>
+ </div>
+ <section class="settings-panel" id="settingsPanel" aria-label="Impostazioni">
+  <h2>⚙️ Impostazioni</h2>
+  <label><input type="checkbox" id="loginOnEntry"><span>Richiedi accesso all’ingresso ogni 10 giorni</span></label>
+  <label><input type="checkbox" id="alertsOnEntry"><span>Mostra gli avvisi all’ingresso</span></label>
+  <label><input type="checkbox" id="reduceMotion"><span>Riduci animazioni ed effetti</span></label>
+ </section>
+ <div id="accountGuide" class="account-guide" style="display:none">⬆ Accedi o registrati qui</div>
+ <div id="firstVisitGuide" class="first-visit-guide" style="display:none">
+  <div>↓ Qui trovi le impostazioni</div>
+  <button type="button" id="dismissGuide">Ho capito</button>
  </div>
 
  <div class="banner-pubblicitario" id="bannerAd">
@@ -611,42 +634,56 @@
  const testoSchermoNero = document.getElementById('testoSchermoNero'); 
  const userStatusBox = document.getElementById('userStatusBox'); 
  
- const DIECI_GIORNI_MS = 10 * 24 * 60 * 60 * 1000; 
- const savedUser = localStorage.getItem('minecraft_username'); 
- const savedTimestamp = localStorage.getItem('minecraft_login_time'); 
- const isGuest = localStorage.getItem('minecraft_guest') === 'true'; 
- const now = new Date().getTime(); 
+ const DIECI_GIORNI_MS = 10 * 24 * 60 * 60 * 1000;
+ const loginOnEntry = document.getElementById('loginOnEntry');
+ const alertsOnEntry = document.getElementById('alertsOnEntry');
+ const reduceMotion = document.getElementById('reduceMotion');
+ reduceMotion.checked = localStorage.getItem('minecraft_reduce_motion') === 'true';
+ if (reduceMotion.checked) document.body.classList.add('reduce-motion');
  
- let bisognaMostrareModale = false; 
- 
- if (!savedUser && !isGuest) { 
- bisognaMostrareModale = true; 
- } else if (savedTimestamp && (now - parseInt(savedTimestamp) > DIECI_GIORNI_MS)) { 
- localStorage.removeItem('minecraft_username'); 
- localStorage.removeItem('minecraft_login_time'); 
- localStorage.removeItem('minecraft_guest'); 
- bisognaMostrareModale = true; 
- } 
- 
- function aggiornaBarraStato() { 
- const currentU = localStorage.getItem('minecraft_username'); 
- const guestActive = localStorage.getItem('minecraft_guest') === 'true'; 
- 
- if (currentU) { 
- userStatusBox.innerHTML = `👤 ${currentU.toUpperCase()} <a id="logoutLink" style="font-size:0.8rem; color:#aaa; margin-left:8px; cursor:pointer;">Esci</a>`; 
- document.getElementById('logoutLink').addEventListener('click', () => { 
- localStorage.removeItem('minecraft_username'); 
- localStorage.removeItem('minecraft_login_time'); 
- location.reload(); 
- }); 
- } else if (guestActive) { 
- userStatusBox.innerHTML = `🛡️ Modalità Ospite <a id="apriRegistrazioneDaBarra">Registrati</a>`; 
- document.getElementById('apriRegistrazioneDaBarra').addEventListener('click', () => { 
- apriModale(); 
- }); 
- } 
- } 
- 
+ loginOnEntry.checked = localStorage.getItem('minecraft_login_on_entry') === 'true';
+ alertsOnEntry.checked = localStorage.getItem('minecraft_alerts_on_entry') === 'true';
+ function chiediRicaricaPerImpostazione(checkbox, chiave) {
+   const valoreNuovo = checkbox.checked;
+   if (confirm('Impostazione salvata. Ricarica la pagina per applicare le modifiche?')) { localStorage.setItem(chiave, String(valoreNuovo)); location.reload(); }
+   else checkbox.checked = !valoreNuovo;
+ }
+ loginOnEntry.addEventListener('change', () => chiediRicaricaPerImpostazione(loginOnEntry, 'minecraft_login_on_entry'));
+ alertsOnEntry.addEventListener('change', () => chiediRicaricaPerImpostazione(alertsOnEntry, 'minecraft_alerts_on_entry'));
+ reduceMotion.addEventListener('change', () => chiediRicaricaPerImpostazione(reduceMotion, 'minecraft_reduce_motion'));
+ const guide = document.getElementById('firstVisitGuide');
+ if (!localStorage.getItem('minecraft_entry_guide_seen')) { guide.style.display='block'; accountGuide.style.display='block'; }
+ document.getElementById('dismissGuide').addEventListener('click', () => { guide.style.display='none'; accountGuide.style.display='none'; localStorage.setItem('minecraft_entry_guide_seen','true'); });
+ const savedUser = localStorage.getItem('minecraft_username');
+ const savedTimestamp = localStorage.getItem('minecraft_login_time');
+ const isGuest = localStorage.getItem('minecraft_guest') === 'true';
+ let bisognaMostrareModale = false;
+ const sessionExpired = Boolean(savedUser || isGuest) && (!savedTimestamp || Date.now() - parseInt(savedTimestamp,10) >= DIECI_GIORNI_MS);
+ if (localStorage.getItem('minecraft_login_expired_requires_account') === 'true') document.getElementById('btnOspite').style.display = 'none';
+ if (loginOnEntry.checked) {
+   if (sessionExpired) {
+     localStorage.removeItem('minecraft_username'); localStorage.removeItem('minecraft_login_time'); localStorage.removeItem('minecraft_guest');
+     localStorage.setItem('minecraft_login_expired_requires_account', 'true');
+     document.getElementById('btnOspite').style.display = 'none';
+     bisognaMostrareModale = true;
+   } else if (!savedUser && !isGuest) bisognaMostrareModale = true;
+ }
+
+ function aggiornaBarraStato() {
+ const currentU = localStorage.getItem('minecraft_username');
+ const guestActive = localStorage.getItem('minecraft_guest') === 'true';
+ if (currentU) {
+   userStatusBox.innerHTML = `👤 ${currentU.toUpperCase()} <a id="logoutLink" style="font-size:0.8rem; color:#aaa; margin-left:8px; cursor:pointer;">Esci</a>`;
+   document.getElementById('logoutLink').addEventListener('click', () => { localStorage.removeItem('minecraft_username'); localStorage.removeItem('minecraft_login_time'); location.reload(); });
+ } else if (guestActive) {
+   userStatusBox.innerHTML = `🛡️ Modalità Ospite <a id="apriRegistrazioneDaBarra">Accedi / Registrati</a>`;
+   document.getElementById('apriRegistrazioneDaBarra').addEventListener('click', apriModale);
+ } else {
+   userStatusBox.innerHTML = `👤 <a id="apriRegistrazioneDaBarra">Accedi / Registrati</a>`;
+   document.getElementById('apriRegistrazioneDaBarra').addEventListener('click', apriModale);
+ }
+ }
+
  function apriModale() { 
  if (boxFormAccesso) boxFormAccesso.style.display = 'block'; 
  if (boxSalutoNero) boxSalutoNero.style.display = 'none'; 
@@ -770,7 +807,8 @@
  } 
  }); 
  
- document.getElementById('btnOspite').addEventListener('click', () => { 
+ document.getElementById('btnOspite').addEventListener('click', () => {
+ if (localStorage.getItem('minecraft_login_expired_requires_account') === 'true') return; 
  localStorage.setItem('minecraft_guest', 'true'); 
  localStorage.setItem('minecraft_login_time', new Date().getTime().toString()); 
  localStorage.removeItem('minecraft_username'); 
@@ -788,7 +826,8 @@
  }, 1200); 
  }); 
  
- function completaAccesso(username) { 
+ function completaAccesso(username) {
+ localStorage.removeItem('minecraft_login_expired_requires_account'); 
  localStorage.setItem('minecraft_username', username); 
  localStorage.setItem('minecraft_login_time', new Date().getTime().toString()); 
  localStorage.removeItem('minecraft_guest'); 
@@ -845,16 +884,30 @@
  }); 
  
  // Controllo in tempo reale per gli avvisi pop-up inviati dall'owner 
+ function mostraVideoUltimoAvviso(data) {
+   const area = document.getElementById('videoAvvisoContainer'); area.replaceChildren();
+   const videoUrl = data.videoUrl || data.urlVideo || data.video || data.linkVideo || data.youtubeUrl;
+   if (typeof videoUrl !== 'string' || !videoUrl.trim()) return;
+   let url; try { url = new URL(videoUrl.trim()); } catch { return; }
+   if (url.protocol !== 'https:') return;
+   const videoId = url.hostname.includes('youtu.be') ? url.pathname.slice(1) : (url.hostname.includes('youtube.com') ? (url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop()) : null);
+   if (videoId && /^[A-Za-z0-9_-]{6,}$/.test(videoId)) {
+     const frame = document.createElement('iframe'); frame.src='https://www.youtube-nocookie.com/embed/'+videoId; frame.title='Ultimo video'; frame.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'; frame.allowFullscreen=true; frame.style.cssText='width:100%;aspect-ratio:16/9;border:0;border-radius:8px'; area.appendChild(frame);
+   } else if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url.pathname+url.search)) {
+     const player=document.createElement('video'); player.src=url.href; player.controls=true; player.style.cssText='width:100%;max-height:300px;border-radius:8px'; area.appendChild(player);
+   }
+ }
  onSnapshot(query(collection(db, "avvisi"), orderBy("timestamp", "desc"), limit(1)), (snapshot) => { 
  snapshot.forEach((doc) => { 
  const data = doc.data(); 
  const currentNick = (localStorage.getItem('minecraft_username') || "ospite").toLowerCase(); 
  const dest = (data.destinatario || "").toLowerCase(); 
  
- if (dest === "tutti" || dest === currentNick) { 
+ if (alertsOnEntry.checked && (dest === "tutti" || dest === currentNick)) { 
  const ultimoAvvisoVisto = localStorage.getItem('ultimo_avviso_visto'); 
- if (ultimoAvvisoVisto !== doc.id) { 
- document.getElementById('testoMessaggioAvviso').innerText = data.messaggio; 
+ if (alertsOnEntry.checked) { 
+ document.getElementById('testoMessaggioAvviso').innerText = data.messaggio || data.titolo || 'Nuovo video pubblicato';
+ mostraVideoUltimoAvviso(data); 
  document.getElementById('modal-AvvisoOwner').style.display = 'flex'; 
  localStorage.setItem('ultimo_avviso_visto', doc.id); 
  } 
