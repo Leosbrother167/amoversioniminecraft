@@ -88,43 +88,50 @@
  background: #e2e8f0;
  }
 
- .theme-selector-container {
- position: absolute;
- top: 20px;
- right: 20px;
- background: rgba(30, 30, 30, 0.85);
- padding: 8px 12px;
- border-radius: 8px;
- border: 1px solid rgba(255, 255, 255, 0.2);
- backdrop-filter: blur(5px);
- z-index: 100;
- }
- .theme-selector-container label {
- font-size: 0.9rem;
- margin-right: 8px;
- color: #ffeb3b;
- font-weight: bold;
- }
- #theme-select {
- background-color: #2d2d2d;
- color: #ffffff;
- border: 1px solid #555;
- padding: 6px 10px;
- border-radius: 6px;
- cursor: pointer;
- font-weight: bold;
- }
+ .site-actions { position:absolute; top:20px; right:20px; z-index:100; }
+ .settings-open-button, .settings-close-button { border:1px solid rgba(255,255,255,.25); border-radius:9px; padding:10px 14px; background:#252525; color:#fff; font-weight:700; font-size:.95rem; cursor:pointer; }
+ .settings-open-button:hover, .settings-close-button:hover { background:#383838; }
+ .settings-overlay { position:fixed; inset:0; z-index:12000; display:none; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; background:rgba(0,0,0,.72); backdrop-filter:blur(4px); }
+ .settings-overlay[aria-hidden="false"] { display:flex; }
+ .settings-panel { position:relative; width:min(460px, calc(100vw - 32px)); max-height:min(82vh, 760px); overflow-y:auto; box-sizing:border-box; padding:20px; border-radius:14px; background:#1e1e1e; border:1px solid rgba(255,255,255,.2); text-align:left; box-shadow:0 12px 40px rgba(0,0,0,.55); }
+ .settings-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+ .settings-panel h2 { margin:0; font-size:1.2rem; color:#ffeb3b; }
+ .settings-close-button { padding:8px 12px; font-size:1.1rem; }
+ .settings-panel label { display:flex; align-items:center; gap:10px; margin:12px 0; cursor:pointer; font-size:.95rem; line-height:1.35; }
+ .settings-panel input[type="checkbox"] { accent-color:#4caf50; width:18px; height:18px; flex:0 0 auto; }
+ .settings-panel select { max-width:100%; background:#2d2d2d; color:#fff; border:1px solid #666; padding:8px 10px; border-radius:7px; }
+ .settings-divider { border:0; border-top:1px solid rgba(255,255,255,.16); margin:16px 0; }
 
- .settings-panel { position:absolute; top:72px; right:20px; z-index:100; width:min(310px, calc(100vw - 40px)); box-sizing:border-box; padding:12px 14px; border-radius:10px; background:rgba(30,30,30,.94); border:1px solid rgba(255,255,255,.2); text-align:left; box-shadow:0 5px 18px rgba(0,0,0,.25); }
- .settings-panel h2 { margin:0 0 10px; font-size:1rem; color:#ffeb3b; }
- .settings-panel label { display:flex; align-items:flex-start; gap:8px; margin:8px 0; cursor:pointer; font-size:.86rem; }
- .settings-panel input { accent-color:#4caf50; margin-top:3px; }
- 
  .first-visit-guide { position:absolute; top:225px; right:20px; z-index:101; background:#fff3cd; color:#222; border:1px solid #e0b84d; border-radius:8px; padding:10px 14px; text-align:left; box-shadow:0 4px 14px #0005; font-size:.85rem; }
  .account-guide { position:absolute; top:65px; left:20px; z-index:101; color:#222; background:#fff3cd; border:1px solid #e0b84d; border-radius:8px; padding:7px 10px; font-weight:bold; }
  body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
  .first-visit-guide button { margin-top:7px; cursor:pointer; }
- body.light-mode .settings-panel { background:rgba(255,255,255,.96); border-color:#ccc; }
+ body.light-mode .settings-panel { background:#fff; border-color:#ccc; color:#222; }
+ body.light-mode .settings-open-button, body.light-mode .settings-close-button { background:#fff; color:#222; border-color:#bbb; }
+ body.light-mode .settings-panel select { background:#fff; color:#222; border-color:#bbb; }
+ body.compact-cards .cards-grid { gap:12px; }
+ body.compact-cards .card { padding:18px; }
+ body.large-text { font-size:18px; }
+ body.high-contrast .card, body.high-contrast .section-box { border:2px solid #fff; }
+ body.high-contrast p, body.high-contrast .card p, body.high-contrast .section-box p { color:#fff; }
+
+ @media (max-width: 600px) {
+   body { padding:14px 12px 24px; background-attachment:scroll; overflow-x:hidden; }
+   .user-status-container { position:relative; inset:auto; width:fit-content; max-width:100%; box-sizing:border-box; margin:0 0 12px; overflow-wrap:anywhere; }
+   .site-actions { position:relative; inset:auto; display:flex; justify-content:flex-end; margin:0 0 12px; }
+   .settings-open-button { min-height:44px; }
+   h1 { font-size:clamp(1.7rem, 8vw, 2.2rem); margin-top:18px; overflow-wrap:anywhere; }
+   p.subtitle { font-size:1rem; }
+   .search-container { width:100%; max-width:none; }
+   .cards-grid { grid-template-columns:minmax(0, 1fr); gap:14px; padding:0; }
+   .card, .section-box, .full-width-box { min-width:0; padding:18px; box-sizing:border-box; overflow-wrap:anywhere; }
+   .card h2, .section-box h3 { font-size:1.25rem; }
+   .settings-overlay { align-items:flex-end; padding:8px 8px max(8px, env(safe-area-inset-bottom)); }
+   .settings-panel { width:100%; max-height:88vh; max-height:88dvh; padding:18px; border-radius:16px 16px 12px 12px; }
+   .first-visit-guide { position:fixed; top:auto; right:12px; bottom:12px; left:12px; }
+   .account-guide { top:62px; left:12px; max-width:calc(100vw - 48px); }
+   .modal-content { width:calc(100% - 24px); max-height:90vh; max-height:90dvh; overflow-y:auto; box-sizing:border-box; padding:22px; }
+ }
  .user-status-container {
  position: absolute;
  top: 20px;
@@ -354,7 +361,8 @@
  }
  </style>
 
-  </head>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1286695361147112" crossorigin="anonymous"></script>
+</head>
 <body>
 
  <div class="user-status-container" id="userStatusBox"></div>
@@ -409,19 +417,23 @@
  </div>
  </div>
 
- <div class="theme-selector-container">
- <label for="theme-select">Tema:</label>
- <select id="theme-select">
- <option value="dark">🌙 Notte (Scuro)</option>
- <option value="light">☀️ Giorno (Chiaro)</option>
- </select>
+ <div class="site-actions">
+  <button type="button" class="settings-open-button" id="apriImpostazioni" aria-haspopup="dialog" aria-controls="settingsPanel">⚙️ Impostazioni</button>
  </div>
- <section class="settings-panel" id="settingsPanel" aria-label="Impostazioni">
-  <h2>⚙️ Impostazioni</h2>
-  <label><input type="checkbox" id="loginOnEntry"><span>Richiedi accesso all’ingresso ogni 10 giorni</span></label>
-  <label><input type="checkbox" id="alertsOnEntry"><span>Mostra gli avvisi all’ingresso</span></label>
-  <label><input type="checkbox" id="reduceMotion"><span>Riduci animazioni ed effetti</span></label>
- </section>
+ <div class="settings-overlay" id="settingsOverlay" aria-hidden="true">
+  <section class="settings-panel" id="settingsPanel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" tabindex="-1">
+   <div class="settings-header"><h2 id="settingsTitle">⚙️ Impostazioni</h2><button type="button" class="settings-close-button" id="chiudiImpostazioni" aria-label="Chiudi impostazioni">✕</button></div>
+   <div class="theme-selector-container"><label for="theme-select">Tema:</label><select id="theme-select"><option value="dark">🌙 Notte (Scuro)</option><option value="light">☀️ Giorno (Chiaro)</option></select></div>
+   <hr class="settings-divider">
+   <label><input type="checkbox" id="loginOnEntry"><span>Richiedi accesso all’ingresso ogni 10 giorni</span></label>
+   <label><input type="checkbox" id="alertsOnEntry"><span>Mostra gli avvisi e l’ultimo video all’ingresso</span></label>
+   <label><input type="checkbox" id="reduceMotion"><span>Riduci animazioni ed effetti</span></label>
+   <label><input type="checkbox" id="compactCardsSetting"><span>Mostra le schede in modo compatto</span></label>
+   <label><input type="checkbox" id="largeTextSetting"><span>Usa testo più grande</span></label>
+   <label><input type="checkbox" id="highContrastSetting"><span>Aumenta il contrasto</span></label>
+   <label><input type="checkbox" id="hideBannerSetting"><span>Nascondi il banner promozionale in home</span></label>
+  </section>
+ </div>
  <div id="accountGuide" class="account-guide" style="display:none">⬆ Accedi o registrati qui</div>
  <div id="firstVisitGuide" class="first-visit-guide" style="display:none">
   <div>↓ Qui trovi le impostazioni</div>
@@ -537,6 +549,18 @@
  const app = initializeApp(firebaseConfig); 
  const db = getFirestore(app); 
  
+ // Finestra delle impostazioni
+ const settingsOverlay = document.getElementById('settingsOverlay');
+ const settingsPanel = document.getElementById('settingsPanel');
+ const openSettingsButton = document.getElementById('apriImpostazioni');
+ const closeSettingsButton = document.getElementById('chiudiImpostazioni');
+ function apriImpostazioni() { settingsOverlay.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; settingsPanel.focus(); }
+ function chiudiImpostazioni() { settingsOverlay.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; openSettingsButton.focus(); }
+ openSettingsButton.addEventListener('click', apriImpostazioni);
+ closeSettingsButton.addEventListener('click', chiudiImpostazioni);
+ settingsOverlay.addEventListener('click', (event) => { if (event.target === settingsOverlay) chiudiImpostazioni(); });
+ document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && settingsOverlay.getAttribute('aria-hidden') === 'false') chiudiImpostazioni(); });
+
  // Gestione Tema 
  const themeSelect = document.getElementById('theme-select'); 
  const body = document.body; 
@@ -551,14 +575,26 @@
  } 
  
  themeSelect.addEventListener('change', function() { 
- if (this.value === 'light') { 
- body.classList.add('light-mode'); 
- localStorage.setItem('theme', 'light'); 
- } else { 
- body.classList.remove('light-mode'); 
- localStorage.setItem('theme', 'dark'); 
- } 
- }); 
+ if (this.value === 'light') { body.classList.add('light-mode'); localStorage.setItem('theme', 'light'); }
+ else { body.classList.remove('light-mode'); localStorage.setItem('theme', 'dark'); }
+ });
+ const preferenzeVisive = [
+   ['compactCardsSetting', 'minecraft_compact_cards', 'compact-cards'],
+   ['largeTextSetting', 'minecraft_large_text', 'large-text'],
+   ['highContrastSetting', 'minecraft_high_contrast', 'high-contrast'],
+   ['hideBannerSetting', 'minecraft_hide_home_banner', null]
+ ];
+ for (const [id, key, className] of preferenzeVisive) {
+   const control = document.getElementById(id);
+   control.checked = localStorage.getItem(key) === 'true';
+   if (id === 'hideBannerSetting') document.getElementById('bannerAd').style.display = control.checked ? 'none' : '';
+   else if (control.checked) body.classList.add(className);
+   control.addEventListener('change', () => {
+     localStorage.setItem(key, String(control.checked));
+     if (id === 'hideBannerSetting') document.getElementById('bannerAd').style.display = control.checked ? 'none' : '';
+     else body.classList.toggle(className, control.checked);
+   });
+ }
  
  // Configurazione Barra di Ricerca e Suggerimenti con Reindirizzamento File 
  const searchInput = document.getElementById('searchInput'); 
